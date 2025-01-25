@@ -1,0 +1,13 @@
+---
+- name: Provision and configure EC2 instances
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Apache
+      apt:
+        name: apache2
+        state: present
+    - name: Install MySQL
+      apt:
+        name: mysql-server
+        state: present
