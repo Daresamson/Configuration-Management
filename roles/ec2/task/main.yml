@@ -1,13 +1,13 @@
 ---
 - name: Provision EC2 instance
   amazon.aws.ec2_instance:
-    key_name: "{{ ec2_key_pair }}"
-    region: "{{ aws_region }}"
-    image_id: "ami-0c55b159cbfafe1f0"  # Replace with an appropriate AMI ID
+    key_name: "{{ yes.pem }}"
+    region: "{{us-east-1  }}"
+    image_id: "ami-05576a079321f21f8"  # Replace with an appropriate AMI ID
     instance_type: "t2.micro"
     count: 1
     wait: yes
-    group: "{{ ec2_security_group }}"
+    group: "{{sg-0381a89c1d05bd011 }}"
     instance_tags:
-      Name: "MyEC2Instance"
+      Name: "new"
   register: ec2
