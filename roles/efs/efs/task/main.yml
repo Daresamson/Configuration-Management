@@ -1,0 +1,15 @@
+---
+- name: Create EFS file system
+  amazon.aws.ec2_efs:
+    name: my-efs
+    performance_mode: generalPurpose
+    region: "{{ aws_region }}"
+    state: present
+  register: efs
+
+- name: Mount EFS on EC2
+  ansible.builtin.mount:
+    path: /mnt/efs
+    fstype: nfs
+    src: "{{ efs.dns_name }}:/"
+    state: mounted
