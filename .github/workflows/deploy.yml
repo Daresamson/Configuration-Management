@@ -41,13 +41,13 @@ jobs:
       run: |
         mkdir -p inventory  # Create the inventory directory if it doesn't exist
         echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "ec2-34.205.73.136.compute-1.amazonaws.com ansible_ssh_private_key_file=/home/ubuntu/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Updated inventory configuration
+        echo "ec2-34.205.73.136.compute-1.amazonaws.com ansible_ssh_private_key_file=/home/ec2-user/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Updated inventory configuration
         
     # Step 6: Run the Ansible Playbook
     - name: Run Ansible Playbook
       run: |
         # Ensure the PEM file has correct permissions
-        chmod 600 /home/ubuntu/yes.pem  # Make sure the PEM file is secure
+        chmod 600/home/ec2-user/yes.pem  # Make sure the PEM file is secure
         
         # Run the Ansible playbook
         ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml
