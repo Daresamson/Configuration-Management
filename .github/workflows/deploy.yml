@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # You can change this to `amazonlinux2`, `fedora-latest`, or `self-hosted` if needed.
+    runs-on: ubuntu-latest  # You can change this to amazonlinux2, fedora-latest, or self-hosted if needed.
 
     steps:
     # Step 1: Checkout the code from the repository
@@ -20,7 +20,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        
+
     # Step 3: Install Ansible and other necessary Python packages
     - name: Install Ansible
       run: |
@@ -31,28 +31,29 @@ jobs:
     - name: Set up AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ACESS_KEY }}  
-        aws-secret-access-key: ${{ secrets.SECRETE_KEY }}  
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRETE_ACESS_KEY }}
         aws-region: ${{ secrets.REGION }}
 
     # Step 5: Set up PEM file from GitHub Secrets
     - name: Set up PEM file from GitHub Secrets
       run: |
-        echo "${{ secrets.PEM_FILE }}" > /home/runner/yes.pem  # Decode PEM file stored as a secret
-        chmod 600 /home/runner/yes.pem  # Set proper permissions for the PEM file
-        
-    # Step 6: Disable SSH StrictHostKeyChecking (to prevent host key verification errors)
-    - name: Disable SSH StrictHostKeyChecking
-      run: |
-        echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+        echo "${{ secrets.PEM_FILE }}" > /home/runner/yes.pem
+        chmod 600 /home/runner/yes.pem
 
-    # Step 7: Set up inventory file
+    # Step 6: Add EC2 instance to known hosts (Prevent SSH verification issues)
+    - name: Add EC2 instance to known hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan ec2-34-205-73-136.compute-1.amazonaws.com >> ~/.ssh/known_hosts
+
+    # Step 7: Set up inventory file for Ansible
     - name: Set up inventory file
       run: |
         mkdir -p inventory  # Create the inventory directory if it doesn't exist
         echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "34.205.73.136 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Use the correct EC2 user and PEM file path
-        
+        echo "34.205.73.136 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini
+
     # Step 8: Run the Ansible Playbook
     - name: Run Ansible Playbook
       run: |
