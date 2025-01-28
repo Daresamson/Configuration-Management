@@ -27,13 +27,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install ansible boto3
 
-    # Step 4: Configure AWS credentials from GitHub secrets
+      # Step 4: Configure AWS credentials from GitHub secrets
     - name: Set up AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ACCESS_KEY }}  # Corrected the secret name to ACCESS_KEY
-        aws-secret-access-key: ${{ secrets.SECRET_KEY }}  # Corrected the secret name to SECRET_KEY
+        aws-access-key-id: ${{ secrets.ACESS_KEY }}
+        aws-secret-access-key: ${{ secrets.SECRETE_KEY}}
         aws-region: ${{ secrets.REGION }}
+
     
     # Step 5: Set up inventory directory and file
     - name: Set up inventory file
