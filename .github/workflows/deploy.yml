@@ -27,28 +27,28 @@ jobs:
         python -m pip install --upgrade pip
         pip install ansible boto3
 
-      # Step 4: Configure AWS credentials from GitHub secrets
+    # Step 4: Configure AWS credentials from GitHub secrets
     - name: Set up AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ACESS_KEY }}
-        aws-secret-access-key: ${{ secrets.SECRETE_KEY}}
+        aws-access-key-id: ${{ secrets.ACCESS_KEY }}  # Corrected ACCESS_KEY secret name
+        aws-secret-access-key: ${{ secrets.SECRET_KEY }}  # Corrected SECRET_KEY secret name
         aws-region: ${{ secrets.REGION }}
 
-    
-    # Step 5: Set up inventory directory and file
+    # Step 5: Set up PEM file from GitHub Secrets
+    - name: Set up PEM file from GitHub Secrets
+      run: |
+        echo "${{ secrets.PEM_FILE }}" > /home/ubuntu/yes.pem  # Decode PEM file stored as a secret
+        chmod 600 /home/ec2-user/yes.pem  # Set proper permissions for the PEM file
+        
+    # Step 6: Set up inventory file
     - name: Set up inventory file
       run: |
         mkdir -p inventory  # Create the inventory directory if it doesn't exist
         echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "ec2-34.205.73.136.compute-1.amazonaws.com ansible_ssh_private_key_file=/home/ec2-user/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Updated inventory configuration
+        echo "ec2-34.205.73.136.compute-1.amazonaws.com ansible_ssh_private_key_file=/home/ubuntu/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Use the correct EC2 user and PEM file path
         
-    # Step 6: Run the Ansible Playbook
+    # Step 7: Run the Ansible Playbook
     - name: Run Ansible Playbook
       run: |
-        # Ensure the PEM file has correct permissions
-        chmod 600 /home/ec2-user/yes.pem  # Make sure the PEM file is secure
- 
-        
-        # Run the Ansible playbook
         ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml
