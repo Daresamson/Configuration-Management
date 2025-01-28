@@ -41,14 +41,19 @@ jobs:
         echo "${{ secrets.PEM_FILE }}" > /home/runner/yes.pem  # Decode PEM file stored as a secret
         chmod 600 /home/runner/yes.pem  # Set proper permissions for the PEM file
         
-    # Step 6: Set up inventory file
+    # Step 6: Disable SSH StrictHostKeyChecking (to prevent host key verification errors)
+    - name: Disable SSH StrictHostKeyChecking
+      run: |
+        echo -e "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+
+    # Step 7: Set up inventory file
     - name: Set up inventory file
       run: |
         mkdir -p inventory  # Create the inventory directory if it doesn't exist
         echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "ec2-34-205-73-136.compute-1.amazonaws.com ansible_ssh_private_key_file=/home/ubuntu/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Use the correct EC2 user and PEM file path
+        echo "34.205.73.136 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini  # Use the correct EC2 user and PEM file path
         
-    # Step 7: Run the Ansible Playbook
+    # Step 8: Run the Ansible Playbook
     - name: Run Ansible Playbook
       run: |
         ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml
