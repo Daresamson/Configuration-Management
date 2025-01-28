@@ -38,8 +38,8 @@ jobs:
     # Step 5: Set up PEM file from GitHub Secrets
     - name: Set up PEM file from GitHub Secrets
       run: |
-        echo "${{ secrets.PEM_FILE }}" > /home/ec2-user/yes.pem  # Decode PEM file stored as a secret
-        chmod 600 /home/ec2-user/yes.pem  # Set proper permissions for the PEM file
+        echo "${{ secrets.PEM_FILE }}" > /home/runner/yes.pem  # Decode PEM file stored as a secret
+        chmod 600 /home/runner/yes.pem  # Set proper permissions for the PEM file
         
     # Step 6: Set up inventory file
     - name: Set up inventory file
