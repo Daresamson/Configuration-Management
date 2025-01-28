@@ -48,6 +48,7 @@ jobs:
       run: |
         # Ensure the PEM file has correct permissions
         chmod 600 /home/ec2-user/yes.pem  # Make sure the PEM file is secure
+ 
         
         # Run the Ansible playbook
         ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml
