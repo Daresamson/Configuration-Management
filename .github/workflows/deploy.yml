@@ -45,14 +45,14 @@ jobs:
     - name: Add EC2 instance to known hosts
       run: |
         mkdir -p ~/.ssh
-        ssh-keyscan ec2-34-205-73-136.compute-1.amazonaws.com >> ~/.ssh/known_hosts
+        ssh-keyscan ec2-44-204-10-46.compute-1.amazonaws.com >> ~/.ssh/known_hosts
 
     # Step 7: Set up inventory file for Ansible
     - name: Set up inventory file
       run: |
         mkdir -p inventory  # Create the inventory directory if it doesn't exist
         echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "34.205.73.136 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini
+        echo "172.31.86.156 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini
 
     # Step 8: Run the Ansible Playbook
     - name: Run Ansible Playbook
