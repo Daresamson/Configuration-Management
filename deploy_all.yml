@@ -7,13 +7,13 @@
     # 1. Provision EC2 Instances
     - name: Provision EC2 instances
       amazon.aws.ec2_instance:
-        key_name: your-key-name
+        key_name: yes.pem
         instance_type: t2.micro
         region: us-east-1
         image_id: ami-05576a079321f21f8  # Specify a valid AMI ID
         count: 1
         wait: yes
-        group: your-security-group
+        group: your-sg-0381a89c1d05bd011
         vpc_subnet_id: subnet-vpc-0b4f0175346bbd8bc
         instance_tags:
           Name: MyEC2Instance
