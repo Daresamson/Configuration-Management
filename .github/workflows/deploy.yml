@@ -31,7 +31,7 @@ jobs:
     - name: Set up AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ACESS_KEY}}
+        aws-access-key-id: ${{ secrets.ACESS_KEY }}
         aws-secret-access-key: ${{ secrets.SECRETE_KEY }}
         aws-region: ${{ secrets.REGION }}
 
@@ -54,7 +54,16 @@ jobs:
         echo "[ec2_instances]" > inventory/aws_ec2.ini
         echo "172.31.86.156 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini
 
-    # Step 8: Run the Ansible Playbook
+    # Step 8: Set up SSH agent and load the key
+    - name: Set up SSH agent and add key
+      run: |
+        eval $(ssh-agent -s)  # Start the SSH agent
+        ssh-add /home/runner/yes.pem  # Add the private key to the SSH agent
+
+    # Step 9: Run the Ansible Playbook
     - name: Run Ansible Playbook
       run: |
-        ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml
+        ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml \
+          --private-key /home/runner/yes.pem \
+          --ssh-extra-args "-o StrictHostKeyChecking=no" \
+          -vvvv
