@@ -1,0 +1,33 @@
+name: Deploy Infrastructure to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Set up AWS credentials using GitHub Secrets
+    - name: Set up AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACES_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRETE_ACCESS_KEY }}
+        aws-region: 'us-east-1'
+
+    # Set up Ansible environment
+    - name: Install Ansible
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ansible python3-boto3 python3-requests
+
+    # Run the combined Ansible playbook to deploy everything
+    - name: Deploy all infrastructure components
+      run: ansible-playbook ansible/playbooks/deploy_all.yml
