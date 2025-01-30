@@ -1,33 +1,29 @@
-name: Deploy Infrastructure to AWS
+name: Deploy Infrastructure on AWS
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger on push to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    # Checkout the code
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v2
 
-    # Set up AWS credentials using GitHub Secrets
+    # Configure AWS credentials
     - name: Set up AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.ACES_KEY }}
-        aws-secret-access-key: ${{ secrets.SECRETE_KEY }}
-        aws-region: 'us-east-1'
+        aws-access-key-id: ${{ secrets.ACES_KEY }}  # Secret from GitHub
+        aws-secret-access-key: ${{ secrets.SECRETE_KEY }}  # Secret from GitHub
+        aws-region: ${{ secrets.REGION }}  # Optional, specify your AWS region
 
-    # Set up Ansible environment
-    - name: Install Ansible
+    # Run Ansible Playbook
+    - name: Run Ansible Playbook
       run: |
-        sudo apt-get update
-        sudo apt-get install -y ansible python3-boto3 python3-requests
-
-    # Run the combined Ansible playbook to deploy everything
-    - name: Deploy all infrastructure components
-      run: ansible-playbook ansible/playbooks/deploy_all.yml
+        ansible-playbook ansible/playbooks/deploy_all.yml
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"  # Disable host key checking if needed
