@@ -2,6 +2,8 @@
 - name: Provision EC2, EFS, MySQL, and Apache on AWS
   hosts: localhost
   gather_facts: false
+  collections:
+    - amazon.aws
   tasks:
     # Step 1: Provision EC2 Instances
     - name: Provision EC2 instances
@@ -12,7 +14,7 @@
         image_id: ami-05576a079321f21f8  # Specify a valid AMI ID
         count: 1
         wait: yes
-        group: your-sg-0381a89c1d05bd011
+        security_group: your-sg-0381a89c1d05bd011
         vpc_subnet_id: subnet-vpc-0b4f0175346bbd8bc
         instance_tags:
           Name: MyEC2Instance
@@ -63,3 +65,14 @@
             name: apache2
             state: started
             enabled: yes
+
+    # Step 6: Output EC2 instance info
+    - name: Output EC2 instance info
+      debug:
+        msg: "EC2 Instance created with IP: {{ ec2_instance.instances[0].public_ip }}"
+
+    # Step 7: Output EFS info
+    - name: Output EFS info
+      debug:
+        msg: "EFS file system ID: {{ efs.file_system_id }}"
+
