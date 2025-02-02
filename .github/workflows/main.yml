@@ -1,69 +1,83 @@
-name: Ansible Deployment to AWS
+---
+- name: Provision EC2, EFS, MySQL, and Apache on AWS
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - amazon.aws
+  tasks:
+    # Step 1: Install the Amazon AWS Collection (if not already installed)
+  - name: Install amazon.aws collection
+      ansible.builtin.pip:
+        name: amazon.aws
+        state: present
 
-# Trigger the workflow on pushes to the 'main' branch
-on:
-  push:
-    branches:
-      - main
+    # Step 2: Provision EC2 Instances
+    - name: Provision EC2 instances
+      amazon.aws.ec2_instance:
+        key_name: yes.pem
+        instance_type: t2.micro
+        region: us-east-1
+        image_id: ami-05576a079321f21f8  # Specify a valid AMI ID
+        count: 1
+        wait: yes
+        security_group: your-sg-0381a89c1d05bd011
+        vpc_subnet_id: subnet-vpc-0b4f0175346bbd8bc
+        instance_tags:
+          Name: MyEC2Instance
+      register: ec2_instance
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest  # You can change this to amazonlinux2, fedora-latest, or self-hosted if needed.
+    # Step 3: Create EFS File System using the correct module
+    - name: Create EFS file system
+      amazon.aws.efs:
+        region: us-east-1
+        state: present
+        creation_token: efs-token
+      register: efs
 
-    steps:
-    # Step 1: Checkout the code from the repository
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    # Step 4: Mount EFS on EC2 instances
+    - name: Mount EFS on EC2 instance
+      ansible.builtin.shell: |
+        sudo mkdir -p /mnt/efs
+        sudo mount -t efs {{ efs.file_system_id }}:/ /mnt/efs
+      delegate_to: "{{ item.private_ip }}"
+      with_items: "{{ ec2_instance.instances }}"
 
-    # Step 2: Set up Python and install dependencies
-    - name: Set up Python and Install Dependencies
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
+    # Step 5: Install MySQL on EC2 instances
+    - name: Install MySQL on EC2
+      hosts: all
+      become: yes
+      tasks:
+        - name: Install MySQL
+          apt:
+            name: mysql-server
+            state: present
+        - name: Start MySQL service
+          service:
+            name: mysql
+            state: started
+            enabled: yes
 
-    # Step 3: Install Ansible and other necessary Python packages
-    - name: Install Ansible
-      run: |
-        python -m pip install --upgrade pip
-        pip install ansible boto3
+    # Step 6: Install Apache on EC2 instances
+    - name: Install Apache on EC2
+      hosts: all
+      become: yes
+      tasks:
+        - name: Install Apache2
+          apt:
+            name: apache2
+            state: present
+        - name: Start Apache service
+          service:
+            name: apache2
+            state: started
+            enabled: yes
 
-    # Step 4: Configure AWS credentials from GitHub secrets
-    - name: Set up AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.ACESS_KEY }}
-        aws-secret-access-key: ${{ secrets.SECRETE_KEY }}
-        aws-region: ${{ secrets.REGION }}
+    # Step 7: Output EC2 instance info
+    - name: Output EC2 instance info
+      debug:
+        msg: "EC2 Instance created with IP: {{ ec2_instance.instances[0].public_ip }}"
 
-    # Step 5: Set up PEM file from GitHub Secrets
-    - name: Set up PEM file from GitHub Secrets
-      run: |
-        echo "${{ secrets.PEM_FILE }}" > /home/runner/yes.pem
-        chmod 600 /home/runner/yes.pem
-
-    # Step 6: Add EC2 instance to known hosts (Prevent SSH verification issues)
-    - name: Add EC2 instance to known hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan ec2-44-204-10-46.compute-1.amazonaws.com >> ~/.ssh/known_hosts
-
-    # Step 7: Set up inventory file for Ansible
-    - name: Set up inventory file
-      run: |
-        mkdir -p inventory  # Create the inventory directory if it doesn't exist
-        echo "[ec2_instances]" > inventory/aws_ec2.ini
-        echo "172.31.86.156 ansible_ssh_private_key_file=/home/runner/yes.pem ansible_user=ec2-user" >> inventory/aws_ec2.ini
-
-    # Step 8: Set up SSH agent and load the key
-    - name: Set up SSH agent and add key
-      run: |
-        eval $(ssh-agent -s)  # Start the SSH agent
-        ssh-add /home/runner/yes.pem  # Add the private key to the SSH agent
-
-    # Step 9: Run the Ansible Playbook
-    - name: Run Ansible Playbook
-      run: |
-        ansible-playbook -i inventory/aws_ec2.ini playbooks/deploy.yml \
-          --private-key /home/runner/yes.pem \
-          --ssh-extra-args "-o StrictHostKeyChecking=no" \
-          -vvvv
+    # Step 8: Output EFS info
+    - name: Output EFS info
+      debug:
+        msg: "EFS file system ID: {{ efs.file_system_id }}"
