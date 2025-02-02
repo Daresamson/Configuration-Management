@@ -1,17 +1,9 @@
----
+--
 - name: Provision EC2, EFS, MySQL, and Apache on AWS
   hosts: localhost
   gather_facts: false
-  collections:
-    - amazon.aws
   tasks:
-    # Step 1: Install the Amazon AWS Collection (if not already installed)
-    - name: Install amazon.aws collection
-      ansible.builtin.pip:
-        name: amazon.aws
-        state: present
-
-    # Step 2: Provision EC2 Instances
+    # 1. Provision EC2 Instances
     - name: Provision EC2 instances
       amazon.aws.ec2_instance:
         key_name: yes.pem
@@ -20,29 +12,26 @@
         image_id: ami-05576a079321f21f8  # Specify a valid AMI ID
         count: 1
         wait: yes
-        security_group: your-sg-0381a89c1d05bd011
+        group: your-sg-0381a89c1d05bd011
         vpc_subnet_id: subnet-vpc-0b4f0175346bbd8bc
         instance_tags:
           Name: MyEC2Instance
       register: ec2_instance
-
-    # Step 3: Create EFS File System using the correct module
+    # 2. Create EFS File System
     - name: Create EFS file system
-      amazon.aws.efs:
+      amazon.aws.ec2_vpc_efs:
         region: us-east-1
         state: present
         creation_token: efs-token
       register: efs
-
-    # Step 4: Mount EFS on EC2 instances
+    # 3. Mount EFS on EC2 instances
     - name: Mount EFS on EC2 instance
       ansible.builtin.shell: |
         sudo mkdir -p /mnt/efs
         sudo mount -t efs {{ efs.file_system_id }}:/ /mnt/efs
-      delegate_to: "{{ item.private_ip }}"
+      delegate_to: "{{ 44.204.10.46 }}"
       with_items: "{{ ec2_instance.instances }}"
-
-    # Step 5: Install MySQL on EC2 instances
+    # 4. Install MySQL on EC2 instances
     - name: Install MySQL on EC2
       hosts: all
       become: yes
@@ -56,8 +45,7 @@
             name: mysql
             state: started
             enabled: yes
-
-    # Step 6: Install Apache on EC2 instances
+    # 5. Install Apache on EC2 instances
     - name: Install Apache on EC2
       hosts: all
       become: yes
@@ -71,13 +59,3 @@
             name: apache2
             state: started
             enabled: yes
-
-    # Step 7: Output EC2 instance info
-    - name: Output EC2 instance info
-      debug:
-        msg: "EC2 Instance created with IP: {{ ec2_instance.instances[0].public_ip }}"
-
-    # Step 8: Output EFS info
-    - name: Output EFS info
-      debug:
-        msg: "EFS file system ID: {{ efs.file_system_id }}"
